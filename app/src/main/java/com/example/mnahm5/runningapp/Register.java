@@ -46,38 +46,48 @@ public class Register extends AppCompatActivity {
             public void onClick(View view) {
                 final String username = etUsername.getText().toString();
                 final String password = etPassword.getText().toString();
+                final String password2 = etPassword2.getText().toString();
                 final String fullName = etFullName.getText().toString();
                 final String email = etEmail.getText().toString();
                 final int weight = Integer.parseInt(etWeight.getText().toString());
 
-                Response.Listener<String> responseListener = new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        try {
-                            JSONObject jsonResponse = new JSONObject(response);
-                            boolean success = jsonResponse.getBoolean("success");
+                if (password.equals(password2)) {
+                    Response.Listener<String> responseListener = new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            try {
+                                JSONObject jsonResponse = new JSONObject(response);
+                                boolean success = jsonResponse.getBoolean("success");
 
-                            if (success) {
-                                Intent intent = new Intent(Register.this, Login.class);
-                                Register.this.startActivity(intent);
+                                if (success) {
+                                    Intent intent = new Intent(Register.this, Login.class);
+                                    Register.this.startActivity(intent);
+                                }
+                                else {
+                                    AlertDialog.Builder builder = new AlertDialog.Builder(Register.this);
+                                    builder.setMessage("Register Failed")
+                                            .setNegativeButton("Retry",null)
+                                            .create()
+                                            .show();
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
                             }
-                            else {
-                                AlertDialog.Builder builder = new AlertDialog.Builder(Register.this);
-                                builder.setMessage("Register Failed")
-                                .setNegativeButton("Retry",null)
-                                .create()
-                                .show();
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
+
                         }
+                    };
 
-                    }
-                };
-
-                RegisterRequest registerRequest = new RegisterRequest(username, password, fullName, email, weight, responseListener);
-                RequestQueue queue = Volley.newRequestQueue(Register.this);
-                queue.add(registerRequest);
+                    RegisterRequest registerRequest = new RegisterRequest(username, password, fullName, email, weight, responseListener);
+                    RequestQueue queue = Volley.newRequestQueue(Register.this);
+                    queue.add(registerRequest);
+                }
+                else {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Register.this);
+                    builder.setMessage("Passwords do not match")
+                    .setNegativeButton("Retry",null)
+                    .create()
+                    .show();
+                }
             }
         });
 

@@ -43,6 +43,15 @@ public class Profile extends AppCompatActivity {
         etWeight.setText(weight);
         etWeight.setEnabled(false);
 
+        btRePassword.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent1 = new Intent(Profile.this,ResetPassword.class);
+                intent1.putExtra("username",username);
+                Profile.this.startActivity(intent1);
+            }
+        });
+
         btEdit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

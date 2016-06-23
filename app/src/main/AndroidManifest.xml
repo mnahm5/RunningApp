@@ -42,7 +42,8 @@
         <activity
             android:name=".Record"
             android:label="@string/title_activity_record" />
-        <activity android:name=".Profile"></activity>
+        <activity android:name=".Profile" />
+        <activity android:name=".ResetPassword"></activity>
     </application>
 
 </manifest>
