@@ -17,6 +17,9 @@ public class MainActivity extends AppCompatActivity {
         final Button btLoginPage = (Button) findViewById(R.id.btLoginPage);
         final Button btTutorialPage = (Button) findViewById(R.id.btTutorialPage);
 
+        Intent intent = new Intent(MainActivity.this, Record.class);
+        MainActivity.this.startActivity(intent);
+
         btRegisterPage.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
