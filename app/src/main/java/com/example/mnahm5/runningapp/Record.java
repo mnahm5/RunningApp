@@ -42,7 +42,11 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.StreetViewPanoramaCamera;
 import com.google.android.gms.vision.text.Text;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.logging.Handler;
 
 public class Record extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -57,6 +61,29 @@ public class Record extends AppCompatActivity implements OnMapReadyCallback {
     private ArrayList<Marker> markerArrayList = new ArrayList<Marker>();
     private String markerTitle;
     private int noOfPolylines;
+    private CalculateRunData runDataCalculator = new CalculateRunData();
+    private double distanceTravelled = 0;
+    private int seconds = 0;
+
+    private TimerTask timerTask = new TimerTask() {
+        @Override
+        public void run() {
+            if (recordIndicator) {
+                seconds++;
+                int hours = seconds/3600;
+                int minutes = (seconds%3600)/60;
+                int secs = seconds%60;
+                DecimalFormat format = new DecimalFormat("#00");
+                final String tvMsg = "Time Elapsed: " + format.format(hours) + ":" + format.format(minutes) + ":" + format.format(secs);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        tvTime.setText(tvMsg);
+                    }
+                });
+            }
+        }
+    };
 
     @Override
     public Context getApplicationContext() {
@@ -78,9 +105,10 @@ public class Record extends AppCompatActivity implements OnMapReadyCallback {
         tvAccuracy = (TextView) findViewById(R.id.tvAccuracy);
         tvDistance = (TextView) findViewById(R.id.tvDistance);
         tvTime = (TextView) findViewById(R.id.tvTime);
-
         Toast.makeText(Record.this,"Please Wait while we pinpoint your location",Toast.LENGTH_SHORT).show();
         changeToState1();
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(timerTask,1000,1000);
 
         btBottom.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -152,21 +180,21 @@ public class Record extends AppCompatActivity implements OnMapReadyCallback {
                     tvAccuracy.setText(msg);
                     if (!recordIndicator) {
                         LatLng currentLocation = new LatLng(location.getLatitude(),location.getLongitude());
-                        if (noOfPolylines < markerArrayList.size()) {
-                            markerArrayList.get(noOfPolylines).remove();
+                        if ((noOfPolylines*2) < markerArrayList.size()) {
+                            markerArrayList.get((noOfPolylines*2)).remove();
                             Marker newMarker = mMap.addMarker(new MarkerOptions()
                                     .position(currentLocation)
                                     .title(markerTitle));
-                            markerArrayList.set(noOfPolylines,newMarker);
+                            markerArrayList.set((noOfPolylines*2),newMarker);
                         }
                         else {
                             Marker newMarker = mMap.addMarker(new MarkerOptions()
                                     .position(currentLocation)
                                     .title(markerTitle));
-                            markerArrayList.add(noOfPolylines,newMarker);
+                            markerArrayList.add((noOfPolylines*2),newMarker);
                         }
-                        mMap.animateCamera(CameraUpdateFactory.zoomTo(25));
                         mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLocation));
+                        mMap.animateCamera(CameraUpdateFactory.zoomTo(25));
                     }
                     else {
                         LatLng currentLocation = new LatLng(location.getLatitude(),location.getLongitude());
@@ -183,8 +211,8 @@ public class Record extends AppCompatActivity implements OnMapReadyCallback {
                                     .title(markerTitle));
                             markerArrayList.add(noOfPolylines + 1, newMarker);
                         }
-                        mMap.animateCamera(CameraUpdateFactory.zoomTo(25));
                         mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLocation));
+                        mMap.animateCamera(CameraUpdateFactory.zoomTo(25));
                         drawPolyline();
                     }
                 }
@@ -222,9 +250,9 @@ public class Record extends AppCompatActivity implements OnMapReadyCallback {
         else {
             points = new ArrayList<LatLng>();
         }
-        if (noOfPolylines < markerArrayList.size() && noOfPolylines < polylinePointsList.size()) {
+        if (noOfPolylines < markerArrayList.size() && noOfPolylines < polylinePointsList.size() && points.size() == 0) {
             startMarker = markerArrayList.get(noOfPolylines);
-            startMarker.setTitle("Start Position");
+            startMarker.setTitle("Start Position" + noOfPolylines);
             LatLng startPoint = new LatLng(startMarker.getPosition().latitude, startMarker.getPosition().longitude);
             points.add(startPoint);
         }
@@ -237,12 +265,6 @@ public class Record extends AppCompatActivity implements OnMapReadyCallback {
             polyline = polylineArrayList.get(noOfPolylines);
             polyline.remove();
         }
-//        else {
-//            LatLng startPoint = new LatLng(startMarker.getPosition().latitude, startMarker.getPosition().longitude);
-//            polylinePoints.add(startPoint);
-//        }
-//        LatLng endPoint = new LatLng(endMarker.getPosition().latitude, endMarker.getPosition().longitude);
-//        polylinePoints.add(endPoint);
         PolylineOptions polylineOptions = new PolylineOptions();
         for (int i = 0; i < points.size(); i++) {
             LatLng point = points.get(i);
@@ -261,6 +283,16 @@ public class Record extends AppCompatActivity implements OnMapReadyCallback {
         else {
             polylinePointsList.add(noOfPolylines, points);
         }
+//        double changeInDistance = runDataCalculator.getDistance(points.get(points.size()-1), points.get(points.size()-2));
+//        distanceTravelled += changeInDistance;
+//        String tvMsg = "Distance: ";
+//        if (distanceTravelled < 1000) {
+//            tvMsg += runDataCalculator.round(distanceTravelled) + "m";
+//        }
+//        else {
+//            tvMsg += runDataCalculator.round(distanceTravelled/1000) + "km";
+//        }
+//        tvDistance.setText(tvMsg);
     }
 
     public void changeToState1() {
@@ -271,17 +303,21 @@ public class Record extends AppCompatActivity implements OnMapReadyCallback {
         polylinePointsList.clear();
         polylineArrayList.clear();
         markerArrayList.clear();
+        String tvDistanceMsg = "Distance: ";
+        tvDistance.setText(tvDistanceMsg);
         String btMsg = "Start";
         btBottom.setText(btMsg);
         btTop.setVisibility(View.GONE);
         btMiddle.setVisibility(View.GONE);
+        distanceTravelled = 0;
+        seconds = 0;
         if (mMap != null) {
             mMap.clear();
         }
     }
 
     public void changeToState2() {
-        markerTitle = "End Position";
+        markerTitle = "End Position - " + noOfPolylines;
         recordIndicator = true;
         count = 1;
 //        noOfPolylines++;
@@ -315,4 +351,5 @@ public class Record extends AppCompatActivity implements OnMapReadyCallback {
                 }
         }
     }
+
 }
