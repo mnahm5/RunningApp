@@ -39,7 +39,7 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Refresh"
+        android:text="Resume"
         android:id="@+id/btTop"
         android:layout_above="@+id/btMiddle"
         android:layout_alignParentLeft="true"
